@@ -1,0 +1,159 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from scipy.stats import skew
+
+
+# Task 1:
+data = pd.read_csv('motorbike_ambulance_calls.csv')
+
+# Correcting the date parsing
+try:
+    data['date'] = pd.to_datetime(data['date'], format='%m/%d/%y')
+except ValueError as e:
+    print(f"Error parsing dates: {e}")
+
+# Display basic statistical details
+print("Basic Statistical Information:")
+print(data.describe())
+
+# Display maximum values
+print("Maximum Values:")
+print(data.max())
+
+# Display minimum values
+print("Minimum Values:")
+print(data.min())
+
+# Print the shape of the dataset
+print("Dataset Dimensions:")
+print(data.shape)
+
+# Task 2: Check Data Types and Missing Values
+
+print("Data Types:")
+print(data.dtypes)
+
+print("Missing Values per Variable:")
+print(data.isnull().sum())
+
+
+# Task 3: Check for Missing Values
+print("Task 3 - Missing Values per Variable:")
+print(data.isnull().sum())
+
+# Task 4: Transform 'date' column to datetime data type and find time limits
+# Transform 'date' column to datetime data type and find time limits
+def transform_date(df: pd.DataFrame, date_col_name: str):
+    df[date_col_name] = pd.to_datetime(df[date_col_name], format='%m/%d/%y')
+    return df
+
+data = transform_date(data, 'date')
+
+def get_time_limits(df: pd.DataFrame, date_col_name: str):
+    first_day = df[date_col_name].min()
+    last_day = df[date_col_name].max()
+    print(f"First day of dataset: {first_day}.\nLast day of dataset: {last_day}")
+
+get_time_limits(data, 'date')
+# Task 5: Extract Categorical Variables into a Separate Dataset
+data_categorical = data[['season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']].copy()
+
+# Task 6: Encode season as numeric
+def encode_season(df: pd.DataFrame, season_col_name: str):
+    season_mapping = {'spring': 1, 'summer': 2, 'fall': 3, 'winter': 4}
+    df[season_col_name] = df[season_col_name].map(season_mapping)
+    return df
+
+data = encode_season(data, 'season')
+
+# Visualizing categorical data
+fig, ax = plt.subplots(2, 4, figsize=(20, 10))
+for variable, subplot in zip(data_categorical.columns, ax.flatten()):
+    sns.countplot(x=data_categorical[variable], ax=subplot)
+    subplot.set_title(f'Countplot of {variable}')
+    subplot.set_xlabel('')
+    subplot.set_ylabel('Counts')
+plt.tight_layout()
+plt.show()
+
+# Task 8: Separate numerical variables
+data_numerical = data[['temp', 'atemp', 'hum', 'windspeed', 'cnt']].copy()
+
+# Task 9: Histograms of numerical variables
+fig, ax = plt.subplots(2, 2, figsize=(20, 10))
+for variable, subplot in zip(data_numerical.columns, ax.flatten()):
+    subplot.hist(data_numerical[variable], bins=20, color='skyblue', edgecolor='black')
+    subplot.set_title(f'Histogram of {variable}')
+    subplot.set_xlabel(variable)
+    subplot.set_ylabel('Frequency')
+plt.tight_layout()
+plt.show()
+
+# Histogram and skewness of the target variable
+plt.figure(figsize=(10, 6))
+sns.histplot(data['cnt'], bins=30, kde=True, color='blue')
+plt.title('Histogram of Total Ambulance Calls')
+plt.xlabel('Count of Ambulance Calls')
+plt.ylabel('Frequency')
+plt.show()
+
+print(f'Skewness of the target variable cnt: {skew(data['cnt'])}')
+
+# Pearson and Spearman correlation matrices
+pearson_corr = data_numerical.corr(method='pearson')
+spearman_corr = data_numerical.corr(method='spearman')
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(pearson_corr, annot=True, fmt=".2f", cmap='coolwarm', cbar=True, square=True)
+plt.title('Pearson Correlation Matrix')
+plt.show()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(spearman_corr, annot=True, fmt=".2f", cmap='coolwarm', cbar=True, square=True)
+plt.title('Spearman Correlation Matrix')
+plt.show()
+
+# Task 14: Regression model
+def get_dummies(df: pd.DataFrame):
+    features = pd.concat([
+        df,
+        pd.get_dummies(df['season'], prefix='season'),
+        pd.get_dummies(df['mnth'], prefix='mnth'),
+        pd.get_dummies(df['weekday'], prefix='weekday'),
+        pd.get_dummies(df['weathersit'], prefix='weathersit'),
+        pd.get_dummies(df['hr'], prefix='hr')
+    ], axis=1)
+    features = features.drop(['season', 'mnth', 'weekday', 'weathersit'], axis=1)
+    return features
+
+features = get_dummies(data)
+
+features['night_hours'] = ((data['hr'] < 6) | (data['hr'] > 20)).astype(int)
+features = features.drop('hr', axis=1)
+
+features_lr = features.drop(['atemp', 'date'], axis=1)
+
+X_train, X_test, y_train, y_test = train_test_split(features_lr.drop('cnt', axis=1), features_lr['cnt'], test_size=0.3, random_state=42)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+y_train_pred = model.predict(X_train)
+y_test_pred = model.predict(X_test)
+
+print('MSE train: {:.3f}, test: {:.3f}'.format(mean_squared_error(y_train, y_train_pred), mean_squared_error(y_test, y_test_pred)))
+print('R^2 train: {:.3f}, test: {:.3f}'.format(r2_score(y_train, y_train_pred), r2_score(y_test, y_test_pred)))
+
+plt.scatter(y_train_pred, y_train_pred - y_train, c='#5f93ad', marker='o', label='Training data')
+plt.scatter(y_test_pred, y_test_pred - y_test, c='#98c3d9', marker='s', label='Test data')
+plt.xlabel('Predicted values')
+plt.ylabel('Residuals')
+plt.legend(loc='upper left')
+plt.hlines(y=0, xmin=min(y_train_pred.min(), y_test_pred.min()), xmax=max(y_train_pred.max(), y_test_pred.max()), color='black')
+plt.tight_layout()
+plt.show()
