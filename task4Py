@@ -11,43 +11,36 @@ from scipy.stats import skew
 # Task 1:
 data = pd.read_csv('motorbike_ambulance_calls.csv')
 
-# Correcting the date parsing
 try:
     data['date'] = pd.to_datetime(data['date'], format='%m/%d/%y')
 except ValueError as e:
     print(f"Error parsing dates: {e}")
 
-# Display basic statistical details
+
 print("Basic Statistical Information:")
 print(data.describe())
-
-# Display maximum values
 print("Maximum Values:")
 print(data.max())
 
-# Display minimum values
 print("Minimum Values:")
 print(data.min())
 
-# Print the shape of the dataset
 print("Dataset Dimensions:")
 print(data.shape)
 
-# Task 2: Check Data Types and Missing Values
+# Task 2
 
 print("Data Types:")
 print(data.dtypes)
-
 print("Missing Values per Variable:")
 print(data.isnull().sum())
 
 
-# Task 3: Check for Missing Values
+# Task 3
 print("Task 3 - Missing Values per Variable:")
 print(data.isnull().sum())
 
-# Task 4: Transform 'date' column to datetime data type and find time limits
-# Transform 'date' column to datetime data type and find time limits
+#Task 4
 def transform_date(df: pd.DataFrame, date_col_name: str):
     df[date_col_name] = pd.to_datetime(df[date_col_name], format='%m/%d/%y')
     return df
@@ -63,7 +56,7 @@ get_time_limits(data, 'date')
 # Task 5: Extract Categorical Variables into a Separate Dataset
 data_categorical = data[['season', 'yr', 'mnth', 'hr', 'holiday', 'weekday', 'workingday', 'weathersit']].copy()
 
-# Task 6: Encode season as numeric
+# Task 6
 def encode_season(df: pd.DataFrame, season_col_name: str):
     season_mapping = {'spring': 1, 'summer': 2, 'fall': 3, 'winter': 4}
     df[season_col_name] = df[season_col_name].map(season_mapping)
@@ -81,10 +74,10 @@ for variable, subplot in zip(data_categorical.columns, ax.flatten()):
 plt.tight_layout()
 plt.show()
 
-# Task 8: Separate numerical variables
+# Task 8
 data_numerical = data[['temp', 'atemp', 'hum', 'windspeed', 'cnt']].copy()
 
-# Task 9: Histograms of numerical variables
+# Task 9
 fig, ax = plt.subplots(2, 2, figsize=(20, 10))
 for variable, subplot in zip(data_numerical.columns, ax.flatten()):
     subplot.hist(data_numerical[variable], bins=20, color='skyblue', edgecolor='black')
@@ -94,7 +87,6 @@ for variable, subplot in zip(data_numerical.columns, ax.flatten()):
 plt.tight_layout()
 plt.show()
 
-# Histogram and skewness of the target variable
 plt.figure(figsize=(10, 6))
 sns.histplot(data['cnt'], bins=30, kde=True, color='blue')
 plt.title('Histogram of Total Ambulance Calls')
@@ -103,8 +95,6 @@ plt.ylabel('Frequency')
 plt.show()
 
 print(f'Skewness of the target variable cnt: {skew(data['cnt'])}')
-
-# Pearson and Spearman correlation matrices
 pearson_corr = data_numerical.corr(method='pearson')
 spearman_corr = data_numerical.corr(method='spearman')
 
