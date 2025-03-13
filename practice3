@@ -3,37 +3,33 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Завантаження даних
+
 titanic_data = pd.read_csv('titanic.csv')
 
-# Перевірка перших кількох записів датасету
+
 print(titanic_data.head())
 
 #task 1
 print("\n=== Task 1 ===")
-# Виведення статистичної інформації за числовими змінними
+
 print(titanic_data.describe())
-# Виведення розмірності датасету
 print(titanic_data.shape)
-# Перевірка типів даних і кількість непорожніх значень
 print(titanic_data.info())
 
 #task 2
 print("\n=== Task 2 ===")
-# Визначення кількості пропущених значень по кожному атрибуту
+
 missing_values = titanic_data.isnull().sum()
-# Виведення результату
 print(missing_values)
 
 #task 3
 print("\n=== Task 3 ===")
-# Кодування категорійних змінних 'Sex' та створення dummy змінних для 'Embarked'
 titanic_data['Sex'] = titanic_data['Sex'].map({'male': 1, 'female': 0})
 embarked_dummies = pd.get_dummies(titanic_data['Embarked'], prefix='Embarked')
 titanic_data = pd.concat([titanic_data, embarked_dummies], axis=1)
 titanic_data.drop('Embarked', axis=1, inplace=True)
 
-# Обчислення матриці кореляцій
+#Обчислення матриці кореляцій
 correlation_matrix = titanic_data.select_dtypes(include=[np.number]).corr()
 plt.figure(figsize=(10, 8))
 sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap='coolwarm', cbar=True)
@@ -108,15 +104,14 @@ title_mapping = {"Mr": 1, "Miss": 2, "Mrs": 3, "Master": 4, "Dr": 5, "Rev": 6, "
 titanic_data['Title'] = titanic_data['Title'].map(title_mapping)
 titanic_data['Title'] = titanic_data['Title'].fillna(0)  # Заповнення пропущених значень
 
-# Кодування 'Embarked'
+#Кодування'Embarked'
 titanic_data = pd.get_dummies(titanic_data, columns=['Embarked'], drop_first=True)
 
-# Перевірка результатів
+
 print(titanic_data.head())
 
 #task 11
 print("\n=== Task 11 ===")
-# Побудова гістограм для кожної числової змінної
 plt.figure(figsize=(15, 10))
 numeric_vars = ['Age', 'Fare', 'Parch', 'SibSp', 'Family_size']
 for i, var in enumerate(numeric_vars):
@@ -130,6 +125,5 @@ plt.show()
 
 #task 12
 print("\n=== Task 12 ===")
-# Побудова парних графіків розсіювання
 sns.pairplot(titanic_data[numeric_vars], plot_kws={'alpha':0.2})
 plt.show()
